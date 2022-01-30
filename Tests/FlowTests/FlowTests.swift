@@ -1,3 +1,10 @@
+//
+//  FlowTests.swift
+//
+//
+//  Created by Valerii Lider on 1/23/22.
+//
+
 import XCTest
 import Combine
 @testable import Flow
