@@ -18,11 +18,15 @@ Minimal implementation of the flow requires the following definitions and method
 - `func tryMap() throws -> CompletionResult`. Method that maps result of the flow into the type defined as CompletionResult
 - `func execute() -> AnyPublisher<UseeStory?, Error>`. Method that provides the next step of the flow
 
-Simple template:
+Upon flow failure the error of FlowInterruptionReason type throws and it  should be handled by the flow caller. 
+For canceling the flow - throw an FlowInterruptionReason.canceled. In current implementation canceling the flow won't provide any details about what UserStory throwed cancelation. 
+If you need to provide more details you should define type, conforming to  Swift.Error, and use FlowInterruptionReason.failed(T##CustomError) to pass the necessary details. 
+
+Simple template of the flow looks like following example:
 
 ```
 enum TestFlow: CombineFlowProtocol, UserStoryProtocol {
-    typealias CompletionResult = Some
+    typealias CompletionResult = T##Some
     typealias Completion = AnyPublisher<CompletionResult, FlowInterruptionReason>
     typealias UserStory = Self
 
@@ -39,10 +43,26 @@ enum TestFlow: CombineFlowProtocol, UserStoryProtocol {
         }
     }
 
-    func tryMap() throws -> Some {
+    func tryMap() throws -> CompletionResult {
         fatalError("TODO: map result of the flow into Some, or throw an error .completedWithUnexpectedResult")
     }
 }
+```
+
+Executing the flow:
+```
+    ...
+    .flatMap { parameters in
+        TestFlow.executeFrom(.case1(parameters))
+    }
+    .map { result in 
+        Result<T##Some, FlowInterruptionReason>.success(result)
+    }
+    .tryCatch { error in 
+        assertionFailure("TODO: handle an error")
+        return Just(Result<T##Some, FlowInterruptionReason>.failure(error))
+    }
+    ...
 ```
 
 For more example please refer to the Tests/FlowTests folder where you can find an example of the cart submission flow implemented using Swift enum and struct.
